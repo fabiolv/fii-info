@@ -1,0 +1,5 @@
+fastapi
+requests
+uvicorn
+bs4
+pydantic
