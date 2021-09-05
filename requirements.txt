@@ -1,5 +1,6 @@
 fastapi
 requests
 uvicorn
+gunicorn
 bs4
 pydantic
