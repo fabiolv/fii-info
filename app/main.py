@@ -17,7 +17,7 @@ class FII(BaseModel):
 @app.get("/")
 def read_root():
     print (fii_basic_url)
-    return {"Hello": "you're in the root"}
+    return {"msg": "/docs"}
 
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Optional[str] = None):
