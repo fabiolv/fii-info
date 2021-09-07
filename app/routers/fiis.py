@@ -4,17 +4,18 @@ from typing import Optional
 import requests
 from pydantic import BaseModel
 from ..config import *
+from ..scrap.scrap_dividends import get_dividends_data
 
 class FII(BaseModel):
-    ticker: str;
-    name: str;
+    ticker: str
+    name: str
     cnpj: str
 
 
 class FIIOut(BaseModel):
-    ticker: str;
-    name: str;
-    cnpj: str;
+    ticker: str
+    name: str
+    cnpj: str
     period: Optional[str]
     investors: Optional[str]
     quotas: Optional[int]
@@ -23,11 +24,12 @@ class FIIOut(BaseModel):
     profitability: Optional[float]
     fund_start: Optional[str]
     dividends_to_distribute: Optional[float]
-    date_ex: Optional[str]
+    dividends: Optional[float]
+    date_base: Optional[str]
     payment_date: Optional[str]
 
 class HTTPError(BaseModel):
-    detail_msg: str
+    msg: str
 
     class Config:
         schema_extra = {
@@ -40,14 +42,10 @@ def get_fii_basic_info(ticker: str) -> FII:
     resp = requests.get(f"{fii_basic_url}/{ticker}")
     if resp.status_code != 200:
         raise HTTPException(404, detail="Ticker not found")
-    print(resp.json())
 
     data = resp.json()["data"]
-
     fii = FII.parse_obj(data)
     
-    print(fii)
-
     return fii
 
 @router.get("/fiis/{ticker}", 
@@ -66,6 +64,16 @@ def get_ticker(ticker):
         print(f"fii is --> {fii}")
     except HTTPException:
         print(f"Ticker {ticker} not found")
-        return JSONResponse(status_code=404, content={"msg": f"Ticker {ticker} not found"})
+        err = HTTPError(msg=f"Ticker {ticker} not found")
+        print(err.json())
+        return JSONResponse(status_code=404, content=err.dict())
 
-    return fii
+    cnpj = fii.cnpj.replace('.', '').replace('/', '').replace('-', '')
+    dividends_data = get_dividends_data(fii.ticker, cnpj, '072021')
+
+    fii_out = FIIOut.parse_obj(fii)
+    fii_out.dividends = dividends_data["dividends"]
+    fii_out.date_base = dividends_data["base_date"]
+    fii_out.payment_date = dividends_data["payment_date"]
+
+    return fii_out

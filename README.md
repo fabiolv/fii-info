@@ -10,5 +10,5 @@
 - Inicio do Fundo (monthly)
 - Rendimentos a Distribuir (monthly)
 - Valor do provento (dividends)
-- Data com (dividends)
+- Data base (dividends)
 - Data do pagamento (dividends)
