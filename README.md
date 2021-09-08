@@ -2,6 +2,7 @@
 - Ticker (basic)
 - Name (basic)
 - CNPJ (basic)
+- Price (yfstocks)
 - Cotistas (monthly)
 - Numero de Cotas (monthly)
 - PL (monthly)
