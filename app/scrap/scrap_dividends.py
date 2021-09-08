@@ -1,19 +1,21 @@
 import requests
+from fastapi import HTTPException
 from bs4 import BeautifulSoup
 from ..config import *
 
 
-def get_dividends_fnet(cnpj: str, period: str) -> dict:
+def get_dividends_fnet(ticker: str, cnpj: str, period: str) -> dict:
     '''
     Queries the FNET API to get the dividends report for a given CNPJ and MMYYYY period
     '''
-    print(f"--> get_dividends_fnet(): {fii_dividends_url}/{cnpj}?period={period}")
-    resp = requests.get(f"{fii_dividends_url}/{cnpj}?period={period}")
-
-    # data.text
-    if(resp.status_code != 200):
-        print(f"Could not find the Dividends report for the CNPJ {cnpj} for the period {period}")
-        return False
+    try: 
+        print(f'--> get_dividends_fnet(): {fii_dividends_url}/{cnpj}?period={period}')
+        resp = requests.get(f'{fii_dividends_url}/{cnpj}?period={period}')
+        if(resp.status_code != 200):
+            raise HTTPException(resp.status_code, detail=f'Could not find the Dividends report for {ticker} with the CNPJ {cnpj} for the period {period}')
+    except:
+            print(f'Could not find the Dividends report for {ticker} with the CNPJ {cnpj} for the period {period}')
+            raise HTTPException(404, detail=f'Could not find the Dividends report for {ticker} with the CNPJ {cnpj} for the period {period}')
     
     return resp.json()
 
@@ -85,7 +87,10 @@ def scrap_html_data(html:str) -> dict:
     return dividend_data
 
 def get_dividends_data(ticker: str, cnpj: str, period: str) -> dict:
-    dividends_data = get_dividends_fnet(cnpj, period)
+    try:
+        dividends_data = get_dividends_fnet(ticker, cnpj, period)
+    except HTTPException as err:
+        raise HTTPException(err.status_code, detail=err.detail)
 
     html = validate_dividends_data(ticker, dividends_data)
 

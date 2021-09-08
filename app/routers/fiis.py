@@ -1,6 +1,8 @@
+from os import error
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
 from typing import Optional
+from pydantic.error_wrappers import error_dict
 import requests
 from pydantic import BaseModel
 from ..config import *
@@ -39,11 +41,11 @@ class HTTPError(BaseModel):
 router = APIRouter(tags=['FIIs'])
 
 def get_fii_basic_info(ticker: str) -> FII:
-    resp = requests.get(f"{fii_basic_url}/{ticker}")
+    resp = requests.get(f'{fii_basic_url}/{ticker}')
     if resp.status_code != 200:
-        raise HTTPException(404, detail="Ticker not found")
+        raise HTTPException(404, detail=f'Ticker {ticker} not found')
 
-    data = resp.json()["data"]
+    data = resp.json()['data']
     fii = FII.parse_obj(data)
     
     return fii
@@ -62,14 +64,20 @@ def get_ticker(ticker):
     try:
         fii = get_fii_basic_info(ticker)
         print(f"fii is --> {fii}")
-    except HTTPException:
-        print(f"Ticker {ticker} not found")
-        err = HTTPError(msg=f"Ticker {ticker} not found")
-        print(err.json())
-        return JSONResponse(status_code=404, content=err.dict())
+    except HTTPException as err:
+        print(f'--> ERROR: Ticker {ticker} not found')
+        http_error = HTTPError(msg=err.detail)
+        return JSONResponse(status_code=err.status_code, content=http_error.dict())
 
-    cnpj = fii.cnpj.replace('.', '').replace('/', '').replace('-', '')
-    dividends_data = get_dividends_data(fii.ticker, cnpj, '072021')
+    period = '082021'
+    try:
+        cnpj = fii.cnpj.replace('.', '').replace('/', '').replace('-', '')
+        dividends_data = get_dividends_data(fii.ticker, cnpj, period)
+    except HTTPException as err:
+        print(f'--> ERROR: Could not retrieve the dividends data for {ticker} and period {period} from FNET API')
+        http_error = HTTPError(msg=err.detail)
+
+        return JSONResponse(status_code=err.status_code, content=http_error.dict())
 
     fii_out = FIIOut.parse_obj(fii)
     fii_out.dividends = dividends_data["dividends"]
