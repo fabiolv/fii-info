@@ -27,16 +27,10 @@ def get_price_value(api_data: dict) -> float:
 
 def get_price_time(api_data: dict) -> str:
     '''
-    Gets the time that the info was updated on the API source.
-    Returns a string with the today's date and that API time
+    Returns a string with the current date and time
     '''
-    # The raw_info is a list and the last element is the string with the time
-    time = api_data['raw_info'][4]
-    # "A partir de  11:13AM BRT. Mercado aberto.". We want the time...
-    time = time.split()[3]
+    date = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
     
-    date = f'{datetime.now().date()} {time}'
-
     return date
 
 def get_prices_data(ticker: str) -> dict:

@@ -23,3 +23,7 @@ def read_root():
 def read_item(item_id: int, q: Optional[str] = None, z: Optional[str] = None):
     return {"item_id": item_id, "q": q, 'z': z}
 
+@app.get('/ping')
+def ping():
+    return {'msg': 'pong'}
+
